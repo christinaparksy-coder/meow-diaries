@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import PixelCatIcon from './PixelCatIcon.jsx'
 
 function downscaleDataUrl(dataUrl, maxSize = 256, quality = 0.82) {
   return new Promise((resolve) => {
@@ -46,11 +47,7 @@ function downscaleDataUrl(dataUrl, maxSize = 256, quality = 0.82) {
 function isValidOwnerInput(value) {
   const s = String(value || '').trim()
   if (s.length < 2 || s.length > 10) return false
-  return /^[A-Za-z0-9가-힣 ]+$/.test(s)
-}
-
-function clampStatus(value) {
-  return String(value || '').slice(0, 50)
+  return /^[A-Za-z0-9가-힣]+$/.test(s)
 }
 
 function localISODate(d = new Date()) {
@@ -61,89 +58,16 @@ function localISODate(d = new Date()) {
 }
 
 const avatarTiles = [
-  { value: 'tuxedo', label: '턱시도냥', body: '#333', extra: '#eee', eyes: '#4db86a' },
-  { value: 'white_graycrown', label: '흰둥이', body: '#f2f2f2', extra: '#b8b8b8', eyes: '#5bc0eb' },
-  { value: 'orange_tabby', label: '치즈냥', body: '#e8833a', extra: '#c45e1a', eyes: '#d4a017' },
-  { value: 'gray_tabby', label: '고등어태비', body: '#888', extra: '#555', eyes: '#4db86a' },
-  { value: 'calico', label: '삼색이', body: '#f2f2f2', extra: '#e8833a', eyes: '#d4a017' },
-  { value: 'black', label: '올블랙', body: '#111', extra: '#111', eyes: '#f5c842' }
+  { value: 'tuxedo', label: '턱시도냥', eyes: '#4db86a' },
+  { value: 'white_graycrown', label: '흰둥이', eyes: '#5bc0eb' },
+  { value: 'orange_tabby', label: '치즈냥', eyes: '#d4a017' },
+  { value: 'gray_tabby', label: '고등어태비', eyes: '#4db86a' },
+  { value: 'calico', label: '삼색이', eyes: '#d4a017' },
+  { value: 'black', label: '올블랙', eyes: '#f5c842' }
 ]
 
 function CatTileSprite({ tile }) {
-  const eye = tile.eyes
-  if (tile.value === 'tuxedo') {
-    return (
-      <svg viewBox="0 0 16 16" width="48" height="48" style={{ imageRendering: 'pixelated' }} aria-hidden="true">
-        <rect x="3" y="1" width="2" height="2" fill="#222" />
-        <rect x="11" y="1" width="2" height="2" fill="#222" />
-        <rect x="4" y="2" width="8" height="7" fill={tile.body} />
-        <rect x="3" y="3" width="10" height="6" fill={tile.body} />
-        <rect x="5" y="6" width="6" height="3" fill={tile.extra} />
-        <rect x="5" y="5" width="2" height="2" fill={eye} />
-        <rect x="9" y="5" width="2" height="2" fill={eye} />
-        <rect x="6" y="6" width="1" height="1" fill="#111" />
-        <rect x="10" y="6" width="1" height="1" fill="#111" />
-        <rect x="5" y="5" width="1" height="1" fill="#fff" />
-        <rect x="9" y="5" width="1" height="1" fill="#fff" />
-        <rect x="5" y="9" width="6" height="5" fill={tile.extra} />
-        <rect x="4" y="10" width="2" height="4" fill="#222" />
-        <rect x="10" y="10" width="2" height="4" fill="#222" />
-      </svg>
-    )
-  }
-
-  if (tile.value === 'white_graycrown') {
-    return (
-      <svg viewBox="0 0 16 16" width="48" height="48" style={{ imageRendering: 'pixelated' }} aria-hidden="true">
-        <rect x="1" y="0" width="3" height="3" fill={tile.extra} />
-        <rect x="12" y="0" width="3" height="3" fill={tile.extra} />
-        <rect x="2" y="2" width="12" height="10" fill={tile.body} />
-        <rect x="4" y="2" width="8" height="1" fill="#c8c8c8" />
-        <rect x="5" y="3" width="6" height="1" fill="#d6d6d6" />
-        <rect x="3" y="5" width="3" height="3" fill={eye} />
-        <rect x="10" y="5" width="3" height="3" fill={eye} />
-        <rect x="4" y="6" width="2" height="2" fill="#1a1a2e" />
-        <rect x="11" y="6" width="2" height="2" fill="#1a1a2e" />
-        <rect x="4" y="6" width="1" height="1" fill="#fff" />
-        <rect x="11" y="6" width="1" height="1" fill="#fff" />
-        <rect x="2" y="10" width="12" height="2" fill="#e0e0e0" />
-      </svg>
-    )
-  }
-
-  if (tile.value === 'calico') {
-    return (
-      <svg viewBox="0 0 16 16" width="48" height="48" style={{ imageRendering: 'pixelated' }} aria-hidden="true">
-        <rect x="2" y="2" width="12" height="10" fill={tile.body} />
-        <rect x="2" y="2" width="5" height="5" fill="#e8833a" opacity="0.9" />
-        <rect x="10" y="8" width="4" height="4" fill="#111" opacity="0.9" />
-        <rect x="3" y="5" width="3" height="3" fill={eye} />
-        <rect x="10" y="5" width="3" height="3" fill={eye} />
-        <rect x="4" y="6" width="2" height="2" fill="#111" />
-        <rect x="11" y="6" width="2" height="2" fill="#111" />
-        <rect x="4" y="6" width="1" height="1" fill="#fff" />
-        <rect x="11" y="6" width="1" height="1" fill="#fff" />
-      </svg>
-    )
-  }
-
-  return (
-    <svg viewBox="0 0 16 16" width="48" height="48" style={{ imageRendering: 'pixelated' }} aria-hidden="true">
-      <rect x="2" y="2" width="12" height="10" fill={tile.body} />
-      {tile.value === 'orange_tabby' || tile.value === 'gray_tabby' ? (
-        <>
-          <rect x="4" y="8" width="8" height="1" fill={tile.extra} opacity="0.55" />
-          <rect x="3" y="10" width="10" height="1" fill={tile.extra} opacity="0.55" />
-        </>
-      ) : null}
-      <rect x="3" y="5" width="3" height="3" fill={eye} />
-      <rect x="10" y="5" width="3" height="3" fill={eye} />
-      <rect x="4" y="6" width="2" height="2" fill="#111" />
-      <rect x="11" y="6" width="2" height="2" fill="#111" />
-      <rect x="4" y="6" width="1" height="1" fill="#fff" />
-      <rect x="11" y="6" width="1" height="1" fill="#fff" />
-    </svg>
-  )
+  return <PixelCatIcon variant={tile.value} eyeColor={tile.eyes} size={48} />
 }
 
 function Chip({ label, active, onClick }) {
@@ -182,9 +106,7 @@ export default function AddCatFlow({ open, onClose, required = false }) {
     eveningFeedTime: '20:00',
     hasMed: false,
     medTime: '20:00',
-    ownerName: '',
-    ownerMindset: '',
-    ownerStatus: ''
+    ownerName: ''
   })
 
   useEffect(() => {
@@ -209,9 +131,7 @@ export default function AddCatFlow({ open, onClose, required = false }) {
       eveningFeedTime: '20:00',
       hasMed: false,
       medTime: '20:00',
-      ownerName: hasOwner ? String(profile.name || '') : '',
-      ownerMindset: hasOwner ? String(profile.mindset || '') : '',
-      ownerStatus: hasOwner ? String(profile.status || '') : ''
+      ownerName: hasOwner ? String(profile.name || '') : ''
     })
   }, [open])
 
@@ -271,15 +191,9 @@ export default function AddCatFlow({ open, onClose, required = false }) {
 
     if (!ownerLocked) {
       const ownerName = String(catData.ownerName || '').trim()
-      const ownerMindset = String(catData.ownerMindset || '').trim()
-      const ownerStatus = String(catData.ownerStatus || '')
 
       if (!isValidOwnerInput(ownerName)) {
-        setOwnerError('집사님 이름은 2~10자, 한글/영문/숫자만 가능해요')
-        return
-      }
-      if (!isValidOwnerInput(ownerMindset)) {
-        setOwnerError('마음가짐은 2~10자, 한글/영문/숫자만 가능해요')
+        setOwnerError('집사님 이름은 2~10자, 한글/영문/숫자만 가능해요 (특수문자/공백 X)')
         return
       }
 
@@ -288,8 +202,6 @@ export default function AddCatFlow({ open, onClose, required = false }) {
           'meowdiaries_owner_profile',
           JSON.stringify({
             name: ownerName,
-            mindset: ownerMindset,
-            status: clampStatus(ownerStatus),
             updatedAt: Date.now(),
             lastUpdatedDate: localISODate()
           })
@@ -306,6 +218,9 @@ export default function AddCatFlow({ open, onClose, required = false }) {
       routines.push({ id: `r_${ts + 2}`, time: catData.medTime, name: '약', emoji: '💊', sub: '', repeat: '매일', category: '약' })
     }
 
+    const picked = avatarTiles.find((t) => t.value === catData.avatarVariant)
+    const pickedEye = picked?.eyes || '#4db86a'
+
     const newCat = {
       id: String(Date.now()),
       name: name || '고양이',
@@ -313,7 +228,7 @@ export default function AddCatFlow({ open, onClose, required = false }) {
       photoUrl: catData.photoUrl || null,
       descriptionTag: catData.descriptionTag || '',
       personalityTag: catData.personalityTag || '',
-      eyeColor: '#4db86a',
+      eyeColor: pickedEye,
       statusPixel: '',
       statusNook: '',
       routines
@@ -588,7 +503,7 @@ export default function AddCatFlow({ open, onClose, required = false }) {
                 <input
                   type="text"
                   className="meow-field w-full px-3 py-3 text-[15px]"
-                  placeholder="예: 소라, 민지, SY..."
+                  placeholder="예: 소라, 민지, SY"
                   value={catData.ownerName}
                   disabled={ownerLocked}
                   onChange={(e) => {
@@ -597,40 +512,14 @@ export default function AddCatFlow({ open, onClose, required = false }) {
                     setCatData((p) => ({ ...p, ownerName: v }))
                   }}
                 />
-                <div className="text-xs text-muted">집사님의 마음가짐</div>
-                <input
-                  type="text"
-                  className="meow-field w-full px-3 py-3 text-[15px]"
-                  placeholder="예: 오늘도 다정하게"
-                  value={catData.ownerMindset}
-                  disabled={ownerLocked}
-                  onChange={(e) => {
-                    const v = e.target.value
-                    setOwnerError('')
-                    setCatData((p) => ({ ...p, ownerMindset: v }))
-                  }}
-                />
-                <div className="text-xs text-muted">집사 상태 메시지</div>
-                <div>
-                  <input
-                    type="text"
-                    className="meow-field w-full px-3 py-3 text-[15px]"
-                    placeholder="예: 오늘은 천천히, 따뜻하게 🐾"
-                    value={catData.ownerStatus}
-                    disabled={ownerLocked}
-                    onChange={(e) => {
-                      const next = clampStatus(e.target.value)
-                      setOwnerError('')
-                      setCatData((p) => ({ ...p, ownerStatus: next }))
-                    }}
-                  />
-                  <div className="mt-1 text-right text-[11px]" style={{ color: 'var(--muted)' }}>
-                    {String(catData.ownerStatus || '').length}/50
+                {!ownerLocked ? (
+                  <div className="text-xs" style={{ color: 'var(--muted)' }}>
+                    2~10자 · 한글/영문/숫자만 · 특수문자/공백은 안 돼요
                   </div>
-                </div>
+                ) : null}
                 {ownerLocked ? (
                   <div className="text-xs" style={{ color: 'var(--muted)' }}>
-                    집사 정보는 마이페이지에서 수정할 수 있어요
+                    마음가짐은 마이페이지에서 설정할 수 있어요
                   </div>
                 ) : null}
                 {ownerError ? (
@@ -666,9 +555,8 @@ export default function AddCatFlow({ open, onClose, required = false }) {
                 type="button"
                 onClick={save}
                 className="pixel-btn w-full py-3 font-main text-[12px] border-accent bg-card"
-                disabled={!ownerLocked && (!isValidOwnerInput(catData.ownerName) || !isValidOwnerInput(catData.ownerMindset))}
-                aria-disabled={!ownerLocked && (!isValidOwnerInput(catData.ownerName) || !isValidOwnerInput(catData.ownerMindset))}
-                style={!ownerLocked && (!isValidOwnerInput(catData.ownerName) || !isValidOwnerInput(catData.ownerMindset)) ? { opacity: 0.6 } : undefined}
+                aria-disabled={!ownerLocked && !isValidOwnerInput(catData.ownerName)}
+                style={!ownerLocked && !isValidOwnerInput(catData.ownerName) ? { opacity: 0.6 } : undefined}
               >
                 추가하기 🐾
               </button>

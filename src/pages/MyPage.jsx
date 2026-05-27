@@ -2,6 +2,7 @@ import { useMemo, useState, useSyncExternalStore } from 'react'
 import { useNavigate } from 'react-router-dom'
 import CatFormModal from '../components/CatFormModal.jsx'
 import AddCatFlow from '../components/AddCatFlow.jsx'
+import PixelCatIcon from '../components/PixelCatIcon.jsx'
 
 function safeParseObj(raw) {
   try {
@@ -26,13 +27,20 @@ function diffDays(aStr, bStr) {
   return Math.floor(ms / 86400000)
 }
 
-function isValidOwnerInput(value) {
+function isValidOwnerName(value) {
   const s = String(value || '').trim()
   if (s.length < 2 || s.length > 10) return false
+  return /^[A-Za-z0-9가-힣]+$/.test(s)
+}
+
+function isValidOwnerMindset(value) {
+  const s = String(value || '').trim()
+  if (s.length === 0) return true
+  if (s.length < 2 || s.length > 50) return false
   return /^[A-Za-z0-9가-힣 ]+$/.test(s)
 }
 
-function clampStatus(value) {
+function clampMindset(value) {
   return String(value || '').slice(0, 50)
 }
 
@@ -61,45 +69,9 @@ function safeParse(raw) {
 }
 
 function TinyCat({ cat }) {
-  const variant = cat?.avatarVariant || 'tuxedo'
-  const eye = cat?.eyeColor || '#4db86a'
-  if (cat?.photoUrl) {
-    return (
-      <div className="h-[52px] w-[52px] flex items-center justify-center overflow-hidden" style={{ borderRadius: 16, border: '1px solid var(--border)', background: 'var(--surface)' }}>
-        <img src={cat.photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-      </div>
-    )
-  }
-  const base =
-    variant === 'black'
-      ? '#111'
-      : variant === 'orange_tabby'
-        ? '#d58b3c'
-        : variant === 'gray_tabby'
-          ? '#9aa0a6'
-          : variant === 'calico'
-            ? '#f2f2f2'
-            : variant === 'white_graycrown'
-              ? '#f2f2f2'
-              : '#333'
   return (
-    <div className="h-[52px] w-[52px] flex items-center justify-center" style={{ borderRadius: 16, border: '1px solid var(--border)', background: 'var(--surface)' }}>
-      <div className="h-7 w-7" style={{ background: base, position: 'relative', borderRadius: 4 }}>
-        {variant === 'white_graycrown' ? (
-          <>
-            <div style={{ position: 'absolute', left: '16%', top: '-4%', width: '68%', height: '28%', background: '#bebebe' }} />
-            <div style={{ position: 'absolute', left: '22%', top: '6%', width: '56%', height: '20%', background: '#cecece' }} />
-          </>
-        ) : null}
-        {variant === 'calico' ? (
-          <>
-            <div style={{ position: 'absolute', left: '0%', top: '0%', width: '45%', height: '40%', background: '#d58b3c', opacity: 0.9 }} />
-            <div style={{ position: 'absolute', right: '0%', bottom: '0%', width: '35%', height: '35%', background: '#222', opacity: 0.9 }} />
-          </>
-        ) : null}
-        <div style={{ position: 'absolute', left: '22%', top: '32%', width: 4, height: 4, background: eye }} />
-        <div style={{ position: 'absolute', right: '22%', top: '32%', width: 4, height: 4, background: eye }} />
-      </div>
+    <div className="h-[52px] w-[52px] flex items-center justify-center overflow-hidden" style={{ borderRadius: 16, border: '1px solid var(--border)', background: 'var(--surface)' }}>
+      <PixelCatIcon cat={cat} size={44} style={{ borderRadius: 12 }} />
     </div>
   )
 }
@@ -124,7 +96,7 @@ export default function MyPage({ theme, onThemeChange }) {
   const [editingCat, setEditingCat] = useState(null)
   const [addFlowOpen, setAddFlowOpen] = useState(false)
   const [ownerEditOpen, setOwnerEditOpen] = useState(false)
-  const [ownerDraft, setOwnerDraft] = useState({ name: '', mindset: '', status: '' })
+  const [ownerDraft, setOwnerDraft] = useState({ name: '', mindset: '' })
   const [ownerDraftError, setOwnerDraftError] = useState('')
   const [limitOpen, setLimitOpen] = useState(false)
   const [limitText, setLimitText] = useState('')
@@ -181,9 +153,8 @@ export default function MyPage({ theme, onThemeChange }) {
 
   const ownerName = String(owner?.name || '').trim()
   const ownerMindset = String(owner?.mindset || '').trim()
-  const ownerStatus = String(owner?.status || '').trim()
 
-  const profileSubtitle = ownerStatus ? ownerStatus : '매일의 소중한 순간을 기록해요 🐾'
+  const profileSubtitle = ownerMindset ? ownerMindset : '매일의 소중한 순간을 기록해요 🐾'
 
   function openOwnerEdit() {
     const last = owner?.lastUpdatedDate ? String(owner.lastUpdatedDate) : null
@@ -201,17 +172,15 @@ export default function MyPage({ theme, onThemeChange }) {
     setOwnerDraftError('')
     setOwnerDraft({
       name: ownerName,
-      mindset: ownerMindset,
-      status: ownerStatus
+      mindset: ownerMindset
     })
     setOwnerEditOpen(true)
   }
 
   const ownerCanSave = useMemo(() => {
-    const nOk = isValidOwnerInput(ownerDraft.name)
-    const mOk = isValidOwnerInput(ownerDraft.mindset)
-    const sOk = String(ownerDraft.status || '').length <= 50
-    return nOk && mOk && sOk
+    const nOk = isValidOwnerName(ownerDraft.name)
+    const mOk = isValidOwnerMindset(ownerDraft.mindset)
+    return nOk && mOk
   }, [ownerDraft])
 
   function saveOwner() {
@@ -229,18 +198,13 @@ export default function MyPage({ theme, onThemeChange }) {
     }
 
     const name = String(ownerDraft.name || '').trim()
-    const mindset = String(ownerDraft.mindset || '').trim()
-    const status = clampStatus(ownerDraft.status || '')
-    if (!isValidOwnerInput(name)) {
-      setOwnerDraftError('집사님 이름은 2~10자, 한글/영문/숫자만 가능해요')
+    const mindset = clampMindset(ownerDraft.mindset || '').trim()
+    if (!isValidOwnerName(name)) {
+      setOwnerDraftError('집사님 이름은 2~10자, 한글/영문/숫자만 가능해요 (특수문자/공백 X)')
       return
     }
-    if (!isValidOwnerInput(mindset)) {
-      setOwnerDraftError('마음가짐은 2~10자, 한글/영문/숫자만 가능해요')
-      return
-    }
-    if (status.length > 50) {
-      setOwnerDraftError('상태 메시지는 50자까지 가능해요')
+    if (!isValidOwnerMindset(mindset)) {
+      setOwnerDraftError('마음가짐은 2~50자, 한글/영문/숫자/공백만 가능해요')
       return
     }
 
@@ -250,7 +214,6 @@ export default function MyPage({ theme, onThemeChange }) {
         JSON.stringify({
           name,
           mindset,
-          status,
           updatedAt: Date.now(),
           lastUpdatedDate: today
         })
@@ -292,26 +255,7 @@ export default function MyPage({ theme, onThemeChange }) {
               🐾
             </div>
             <div className="min-w-0">
-              <div className="text-[18px] font-bold text-text">마이</div>
-              {ownerName ? (
-                <div className="mt-1">
-                  <span
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 6,
-                      padding: '4px 10px',
-                      borderRadius: 999,
-                      background: 'rgba(255,241,234,0.75)',
-                      color: 'var(--text)',
-                      fontSize: 12,
-                      fontWeight: 700
-                    }}
-                  >
-                    집사 {ownerName}
-                  </span>
-                </div>
-              ) : null}
+              <div className="text-[18px] font-bold text-text truncate">{ownerName ? `${ownerName} 집사님` : '집사님'}</div>
               <div className="mt-2 text-[13px]" style={{ color: 'var(--muted)' }}>
                 {profileSubtitle}
               </div>
@@ -676,35 +620,21 @@ export default function MyPage({ theme, onThemeChange }) {
 
               <label className="space-y-1 block">
                 <div className="text-[12px]" style={{ color: 'var(--muted)' }}>
-                  집사님의 마음가짐 (2~10자, 한글/영문/숫자)
+                  집사님의 마음가짐 (최대 50자)
                 </div>
                 <input
                   type="text"
                   className="meow-field px-3 py-3 text-[15px]"
                   value={ownerDraft.mindset}
+                  placeholder="예: 오늘도 다정하게"
                   onChange={(e) => {
+                    const next = clampMindset(e.target.value)
                     setOwnerDraftError('')
-                    setOwnerDraft((p) => ({ ...p, mindset: e.target.value }))
-                  }}
-                />
-              </label>
-
-              <label className="space-y-1 block">
-                <div className="text-[12px]" style={{ color: 'var(--muted)' }}>
-                  집사 상태 메시지 (최대 50자)
-                </div>
-                <input
-                  type="text"
-                  className="meow-field px-3 py-3 text-[15px]"
-                  value={ownerDraft.status}
-                  onChange={(e) => {
-                    const next = clampStatus(e.target.value)
-                    setOwnerDraftError('')
-                    setOwnerDraft((p) => ({ ...p, status: next }))
+                    setOwnerDraft((p) => ({ ...p, mindset: next }))
                   }}
                 />
                 <div className="text-right text-[11px]" style={{ color: 'var(--muted)' }}>
-                  {String(ownerDraft.status || '').length}/50
+                  {String(ownerDraft.mindset || '').length}/50
                 </div>
               </label>
 
