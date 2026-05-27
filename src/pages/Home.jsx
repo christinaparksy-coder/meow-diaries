@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import CatToggleButtons from '../components/CatToggleButtons.jsx'
+import DailyCard from '../components/DailyCard.jsx'
 import { encryptText, hydrateDiaryEntries } from '../utils/secureText.js'
 import getCatStatus from '../utils/catStatus.js'
 import { getStreak, updateStreak } from '../utils/streak.js'
+import { downloadDailyCard } from '../utils/downloadDailyCard.js'
 
 function loadJSON(key, fallback) {
   try {
@@ -45,6 +47,14 @@ function Avatar({ cat }) {
   const isNook = theme === 'nook'
   const variant = cat?.avatarVariant || 'tuxedo'
   const eye = cat?.eyeColor || '#4db86a'
+
+  if (cat?.photoUrl) {
+    return (
+      <div className="h-16 w-16 shrink-0 pixel-border bg-surface flex items-center justify-center overflow-hidden">
+        <img src={cat.photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+      </div>
+    )
+  }
 
   const base =
     variant === 'black'
@@ -274,6 +284,10 @@ function PixelCatAvatar({ cat, size = 84 }) {
   const eye = cat?.eyeColor || '#4db86a'
   const px = Number(size) || 84
 
+  if (cat?.photoUrl) {
+    return <img src={cat.photoUrl} alt="" style={{ width: px, height: px, borderRadius: 16, objectFit: 'cover' }} />
+  }
+
   if (variant === 'tuxedo') {
     return (
       <svg viewBox="0 0 16 16" width={px} height={px} style={{ imageRendering: 'pixelated' }} aria-hidden="true">
@@ -389,10 +403,16 @@ export default function Home() {
   const [photoHint, setPhotoHint] = useState('')
   const [statusMsg, setStatusMsg] = useState('')
   const [streakCount, setStreakCount] = useState(0)
+  const [isGeneratingCard, setIsGeneratingCard] = useState(false)
   const [diaryEntries, setDiaryEntries] = useState([])
   const todayStr = localISODate()
   const [selectedDate, setSelectedDate] = useState(() => localISODate())
   const date = selectedDate
+
+  const cardEntry = useMemo(() => {
+    if (!activeCat?.id) return null
+    return (Array.isArray(diaryEntries) ? diaryEntries : []).find((e) => e.date === date && String(e.catId) === String(activeCat.id)) || null
+  }, [diaryEntries, activeCat?.id, date])
 
   const todayRoutines = activeCat?.routines || []
   const completedSet = useMemo(() => {
@@ -646,6 +666,17 @@ export default function Home() {
     window.setTimeout(() => setMemoStatus(''), 1800)
   }
 
+  async function handleCameraClick() {
+    if (!activeCat?.id) return
+    if (isGeneratingCard) return
+    setIsGeneratingCard(true)
+    setPhotoHint('카드 저장 중...')
+    await new Promise((r) => window.setTimeout(r, 120))
+    await downloadDailyCard(activeCat.name, date)
+    setIsGeneratingCard(false)
+    window.setTimeout(() => setPhotoHint(''), 1200)
+  }
+
   return (
     <div className="space-y-4">
       <section style={{ paddingTop: 16 }}>
@@ -839,8 +870,17 @@ export default function Home() {
         <div className="flex items-center justify-between gap-3">
           <div className="text-[15px] font-bold text-text">오늘의 메모</div>
           <div className="flex items-center gap-3 text-[18px]" style={{ color: 'var(--muted)' }}>
-            <button type="button" onClick={() => setPhotoHint('준비중이에요 🐾')} aria-label="추억 남기기">
-              📷
+            <button
+              type="button"
+              onClick={() => void handleCameraClick()}
+              aria-label="오늘 데일리 카드 저장"
+              disabled={isGeneratingCard}
+              style={{
+                opacity: isGeneratingCard ? 0.6 : 1,
+                cursor: isGeneratingCard ? 'not-allowed' : 'pointer'
+              }}
+            >
+              {isGeneratingCard ? '⏳' : '📷'}
             </button>
             <button type="button" aria-label="메모 옵션">
               ⋮
@@ -981,6 +1021,8 @@ export default function Home() {
         ) : null}
 
       </section>
+
+      {activeCat ? <DailyCard cat={activeCat} date={date} routineLogs={logs} diaryEntry={cardEntry} streak={streakCount} /> : null}
 
       <button
         type="button"

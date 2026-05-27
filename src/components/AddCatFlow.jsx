@@ -1,6 +1,48 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+function downscaleDataUrl(dataUrl, maxSize = 256, quality = 0.82) {
+  return new Promise((resolve) => {
+    const url = String(dataUrl || '')
+    if (!url.startsWith('data:image/')) {
+      resolve(url)
+      return
+    }
+
+    const img = new Image()
+    img.onload = () => {
+      const w = img.naturalWidth || img.width
+      const h = img.naturalHeight || img.height
+      if (!w || !h) {
+        resolve(url)
+        return
+      }
+
+      const scale = Math.min(1, maxSize / Math.max(w, h))
+      const cw = Math.max(1, Math.round(w * scale))
+      const ch = Math.max(1, Math.round(h * scale))
+
+      const canvas = document.createElement('canvas')
+      canvas.width = cw
+      canvas.height = ch
+      const ctx = canvas.getContext('2d')
+      if (!ctx) {
+        resolve(url)
+        return
+      }
+      ctx.drawImage(img, 0, 0, cw, ch)
+
+      try {
+        resolve(canvas.toDataURL('image/jpeg', quality))
+      } catch {
+        resolve(url)
+      }
+    }
+    img.onerror = () => resolve(url)
+    img.src = url
+  })
+}
+
 const avatarTiles = [
   { value: 'tuxedo', label: '턱시도냥', body: '#333', extra: '#eee', eyes: '#4db86a' },
   { value: 'white_graycrown', label: '흰둥이', body: '#f2f2f2', extra: '#b8b8b8', eyes: '#5bc0eb' },
@@ -177,7 +219,10 @@ export default function AddCatFlow({ open, onClose, required = false }) {
     const reader = new FileReader()
     reader.onload = () => {
       const dataUrl = String(reader.result || '')
-      setCatData((p) => ({ ...p, photoUrl: dataUrl, avatarVariant: 'photo' }))
+      void (async () => {
+        const resized = await downscaleDataUrl(dataUrl)
+        setCatData((p) => ({ ...p, photoUrl: resized, avatarVariant: 'photo' }))
+      })()
     }
     reader.readAsDataURL(file)
   }

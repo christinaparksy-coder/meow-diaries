@@ -21,6 +21,10 @@ function PixelCatAvatar({ cat, size = 32 }) {
     (cat?.id === 'noel' ? 'white_graycrown' : cat?.id === 'liam' ? 'tuxedo' : 'tuxedo')
   const eye = cat?.eyeColor || (variant === 'white_graycrown' ? '#5bc0eb' : '#4db86a')
 
+  if (cat?.photoUrl) {
+    return <img src={cat.photoUrl} alt="" style={{ width: size, height: size, borderRadius: 10, objectFit: 'cover' }} />
+  }
+
   if (variant === 'tuxedo') {
     return (
       <svg

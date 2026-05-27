@@ -9,6 +9,23 @@ function CatAvatar({ cat, size }) {
     return { width: px, height: px, imageRendering: 'pixelated' }
   }, [size])
 
+  if (cat?.photoUrl) {
+    return (
+      <img
+        src={cat.photoUrl}
+        alt=""
+        width={scale.width}
+        height={scale.height}
+        style={{
+          width: scale.width,
+          height: scale.height,
+          borderRadius: 999,
+          objectFit: 'cover'
+        }}
+      />
+    )
+  }
+
   if (variant === 'tuxedo') {
     return (
       <svg viewBox="0 0 16 16" width={scale.width} height={scale.height} style={scale} aria-hidden="true">

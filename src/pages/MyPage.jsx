@@ -30,6 +30,13 @@ function safeParse(raw) {
 function TinyCat({ cat }) {
   const variant = cat?.avatarVariant || 'tuxedo'
   const eye = cat?.eyeColor || '#4db86a'
+  if (cat?.photoUrl) {
+    return (
+      <div className="h-10 w-10 pixel-border bg-surface flex items-center justify-center overflow-hidden">
+        <img src={cat.photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+      </div>
+    )
+  }
   const base =
     variant === 'black'
       ? '#111'
