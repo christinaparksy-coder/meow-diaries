@@ -43,6 +43,23 @@ function downscaleDataUrl(dataUrl, maxSize = 256, quality = 0.82) {
   })
 }
 
+function isValidOwnerInput(value) {
+  const s = String(value || '').trim()
+  if (s.length < 2 || s.length > 10) return false
+  return /^[A-Za-z0-9가-힣 ]+$/.test(s)
+}
+
+function clampStatus(value) {
+  return String(value || '').slice(0, 50)
+}
+
+function localISODate(d = new Date()) {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
 const avatarTiles = [
   { value: 'tuxedo', label: '턱시도냥', body: '#333', extra: '#eee', eyes: '#4db86a' },
   { value: 'white_graycrown', label: '흰둥이', body: '#f2f2f2', extra: '#b8b8b8', eyes: '#5bc0eb' },
@@ -153,6 +170,8 @@ export default function AddCatFlow({ open, onClose, required = false }) {
   const editInputRef = useRef(null)
 
   const [step, setStep] = useState(1)
+  const [ownerLocked, setOwnerLocked] = useState(false)
+  const [ownerError, setOwnerError] = useState('')
   const [catData, setCatData] = useState({
     name: '',
     avatarVariant: 'tuxedo',
@@ -162,12 +181,24 @@ export default function AddCatFlow({ open, onClose, required = false }) {
     morningFeedTime: '08:00',
     eveningFeedTime: '20:00',
     hasMed: false,
-    medTime: '20:00'
+    medTime: '20:00',
+    ownerName: '',
+    ownerMindset: '',
+    ownerStatus: ''
   })
 
   useEffect(() => {
     if (!open) return
     setStep(1)
+    setOwnerError('')
+    let profile = null
+    try {
+      profile = JSON.parse(localStorage.getItem('meowdiaries_owner_profile') || 'null')
+    } catch {
+      profile = null
+    }
+    const hasOwner = profile && typeof profile === 'object' && String(profile.name || '').trim() !== ''
+    setOwnerLocked(Boolean(hasOwner))
     setCatData({
       name: '',
       avatarVariant: 'tuxedo',
@@ -177,7 +208,10 @@ export default function AddCatFlow({ open, onClose, required = false }) {
       morningFeedTime: '08:00',
       eveningFeedTime: '20:00',
       hasMed: false,
-      medTime: '20:00'
+      medTime: '20:00',
+      ownerName: hasOwner ? String(profile.name || '') : '',
+      ownerMindset: hasOwner ? String(profile.mindset || '') : '',
+      ownerStatus: hasOwner ? String(profile.status || '') : ''
     })
   }, [open])
 
@@ -234,6 +268,35 @@ export default function AddCatFlow({ open, onClose, required = false }) {
   function save() {
     const name = catData.name.trim()
     if (!name) return
+
+    if (!ownerLocked) {
+      const ownerName = String(catData.ownerName || '').trim()
+      const ownerMindset = String(catData.ownerMindset || '').trim()
+      const ownerStatus = String(catData.ownerStatus || '')
+
+      if (!isValidOwnerInput(ownerName)) {
+        setOwnerError('집사님 이름은 2~10자, 한글/영문/숫자만 가능해요')
+        return
+      }
+      if (!isValidOwnerInput(ownerMindset)) {
+        setOwnerError('마음가짐은 2~10자, 한글/영문/숫자만 가능해요')
+        return
+      }
+
+      try {
+        localStorage.setItem(
+          'meowdiaries_owner_profile',
+          JSON.stringify({
+            name: ownerName,
+            mindset: ownerMindset,
+            status: clampStatus(ownerStatus),
+            updatedAt: Date.now(),
+            lastUpdatedDate: localISODate()
+          })
+        )
+      } catch {}
+    }
+
     const ts = Date.now()
     const routines = [
       { id: `r_${ts}`, time: catData.morningFeedTime, name: '아침밥', emoji: '🍚', sub: '', repeat: '매일', category: '식사' },
@@ -520,6 +583,63 @@ export default function AddCatFlow({ open, onClose, required = false }) {
                 </label>
               ) : null}
 
+              <div className="mt-2 space-y-2">
+                <div className="text-xs text-muted">집사님의 이름</div>
+                <input
+                  type="text"
+                  className="meow-field w-full px-3 py-3 text-[15px]"
+                  placeholder="예: 소라, 민지, SY..."
+                  value={catData.ownerName}
+                  disabled={ownerLocked}
+                  onChange={(e) => {
+                    const v = e.target.value
+                    setOwnerError('')
+                    setCatData((p) => ({ ...p, ownerName: v }))
+                  }}
+                />
+                <div className="text-xs text-muted">집사님의 마음가짐</div>
+                <input
+                  type="text"
+                  className="meow-field w-full px-3 py-3 text-[15px]"
+                  placeholder="예: 오늘도 다정하게"
+                  value={catData.ownerMindset}
+                  disabled={ownerLocked}
+                  onChange={(e) => {
+                    const v = e.target.value
+                    setOwnerError('')
+                    setCatData((p) => ({ ...p, ownerMindset: v }))
+                  }}
+                />
+                <div className="text-xs text-muted">집사 상태 메시지</div>
+                <div>
+                  <input
+                    type="text"
+                    className="meow-field w-full px-3 py-3 text-[15px]"
+                    placeholder="예: 오늘은 천천히, 따뜻하게 🐾"
+                    value={catData.ownerStatus}
+                    disabled={ownerLocked}
+                    onChange={(e) => {
+                      const next = clampStatus(e.target.value)
+                      setOwnerError('')
+                      setCatData((p) => ({ ...p, ownerStatus: next }))
+                    }}
+                  />
+                  <div className="mt-1 text-right text-[11px]" style={{ color: 'var(--muted)' }}>
+                    {String(catData.ownerStatus || '').length}/50
+                  </div>
+                </div>
+                {ownerLocked ? (
+                  <div className="text-xs" style={{ color: 'var(--muted)' }}>
+                    집사 정보는 마이페이지에서 수정할 수 있어요
+                  </div>
+                ) : null}
+                {ownerError ? (
+                  <div className="text-xs" style={{ color: 'var(--accent)' }}>
+                    {ownerError}
+                  </div>
+                ) : null}
+              </div>
+
               <div className="mt-2 flex flex-col items-center">
                 <div style={{ width: 72, height: 72, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   {catData.avatarVariant === 'photo' && catData.photoUrl ? (
@@ -542,7 +662,14 @@ export default function AddCatFlow({ open, onClose, required = false }) {
                 </div>
               </div>
 
-              <button type="button" onClick={save} className="pixel-btn w-full py-3 font-main text-[12px] border-accent bg-card">
+              <button
+                type="button"
+                onClick={save}
+                className="pixel-btn w-full py-3 font-main text-[12px] border-accent bg-card"
+                disabled={!ownerLocked && (!isValidOwnerInput(catData.ownerName) || !isValidOwnerInput(catData.ownerMindset))}
+                aria-disabled={!ownerLocked && (!isValidOwnerInput(catData.ownerName) || !isValidOwnerInput(catData.ownerMindset))}
+                style={!ownerLocked && (!isValidOwnerInput(catData.ownerName) || !isValidOwnerInput(catData.ownerMindset)) ? { opacity: 0.6 } : undefined}
+              >
                 추가하기 🐾
               </button>
             </div>

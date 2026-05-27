@@ -143,7 +143,7 @@ export default function App({ onThemeChange }) {
   const location = useLocation()
   const [theme, setTheme] = useState(() => {
     const stored = localStorage.getItem('meowdiaries_theme') || ''
-    return stored === 'nook' ? 'nook' : 'standard'
+    return ['standard', 'pixel', 'nook', 'dreamy'].includes(stored) ? stored : 'standard'
   })
   const [notifOpen, setNotifOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -166,7 +166,8 @@ export default function App({ onThemeChange }) {
   }, [location.pathname])
 
   function setAndApplyTheme(next) {
-    const t = next === 'nook' ? 'nook' : 'standard'
+    const v = String(next || '')
+    const t = ['standard', 'pixel', 'nook', 'dreamy'].includes(v) ? v : 'standard'
     setTheme(t)
     onThemeChange?.(t)
   }
@@ -216,8 +217,13 @@ export default function App({ onThemeChange }) {
   return (
     <div className="min-h-dvh bg-bg text-text font-body">
       <AddCatFlow open={needsFirstCat} required onClose={() => {}} />
-      <header className="hud-bar fixed top-0 left-0 right-0 border-b" style={{ borderColor: 'var(--border)' }}>
-        <div className="mx-auto flex w-full max-w-[390px] items-center justify-between px-5 py-3">
+      <header
+        className="hud-bar fixed top-0 left-0 right-0"
+        style={{
+          borderBottom: '1px solid var(--border)'
+        }}
+      >
+        <div className="mx-auto flex h-[72px] w-full max-w-[390px] items-center justify-between px-5">
           <button type="button" className="hud-btn p-2" aria-label="메뉴">
             <IconHamburger />
           </button>
@@ -313,23 +319,30 @@ export default function App({ onThemeChange }) {
               <section className="pixel-border bg-surface p-3">
                 <div className="font-main text-[10px] text-muted">테마 설정</div>
                 <div className="mt-2 grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setAndApplyTheme('standard')}
-                    className={[
-                      'pixel-btn px-3 py-3 text-[10px] font-main',
-                      theme === 'standard' ? 'border-accent bg-card' : 'border-border bg-surface text-muted'
-                    ].join(' ')}
-                  >
-                    STANDARD {theme === 'standard' ? '✓' : ''}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSettingsMsg('프리미엄 전용이에요 ✨')}
-                    className="pixel-btn px-3 py-3 text-[10px] font-main border-border bg-surface text-muted"
-                  >
-                    NOOK 🔒
-                  </button>
+                  {[
+                    { key: 'standard', label: 'STANDARD', badge: 'FREE', onClick: () => setAndApplyTheme('standard') },
+                    { key: 'pixel', label: 'PIXEL', badge: '🔒 PREMIUM', onClick: () => setSettingsMsg('프리미엄 전용이에요 ✨') },
+                    { key: 'nook', label: 'NOOK', badge: '🔒 PREMIUM', onClick: () => setSettingsMsg('프리미엄 전용이에요 ✨') },
+                    { key: 'dreamy', label: 'DREAMY', badge: '🔒 PREMIUM', onClick: () => setSettingsMsg('프리미엄 전용이에요 ✨') }
+                  ].map((t) => {
+                    const active = theme === t.key
+                    return (
+                      <button
+                        key={t.key}
+                        type="button"
+                        onClick={t.onClick}
+                        className={[
+                          'pixel-btn px-3 py-3 text-[10px] font-main flex items-center justify-between gap-2',
+                          active ? 'border-accent bg-card' : 'border-border bg-surface text-muted'
+                        ].join(' ')}
+                      >
+                        <span>
+                          {t.label} {active ? '✓' : ''}
+                        </span>
+                        <span style={{ fontSize: 9 }}>{t.badge}</span>
+                      </button>
+                    )
+                  })}
                 </div>
                 {settingsMsg ? <div className="mt-2 text-xs text-muted">{settingsMsg}</div> : null}
               </section>
@@ -403,7 +416,14 @@ export default function App({ onThemeChange }) {
         </Routes>
       </main>
 
-      <nav className="fixed bottom-0 left-0 right-0 border-t bg-card" style={{ borderColor: 'var(--border)' }}>
+      <nav
+        className="fixed bottom-0 left-0 right-0"
+        style={{
+          borderTop: '1px solid var(--border)',
+          background: 'color-mix(in srgb, var(--card) 85%, transparent)',
+          backdropFilter: 'blur(10px)'
+        }}
+      >
         <div className="mx-auto flex w-full max-w-[390px] justify-around px-2 pb-5 pt-2">
           {tabs.map((t) => {
             const active = t.key === activeKey

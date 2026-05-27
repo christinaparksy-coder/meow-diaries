@@ -40,14 +40,15 @@ const seedCats = [
 ]
 
 function applyTheme(theme) {
-  const t = theme === 'nook' ? 'nook' : 'standard'
+  const next = String(theme || '')
+  const t = ['standard', 'pixel', 'nook', 'dreamy'].includes(next) ? next : 'standard'
   document.documentElement.setAttribute('data-theme', t)
   localStorage.setItem('meowdiaries_theme', t)
 }
 
 function bootstrapLocalData() {
   const stored = localStorage.getItem('meowdiaries_theme') || ''
-  const theme = stored === 'nook' ? 'nook' : 'standard'
+  const theme = ['standard', 'pixel', 'nook', 'dreamy'].includes(stored) ? stored : 'standard'
   document.documentElement.setAttribute('data-theme', theme)
   if (stored !== theme) localStorage.setItem('meowdiaries_theme', theme)
 
