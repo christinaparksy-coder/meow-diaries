@@ -43,7 +43,7 @@ function localISODateFromTimestamp(ts) {
 }
 
 function Avatar({ cat }) {
-  const theme = document.documentElement.getAttribute('data-theme') || 'pixel'
+  const theme = document.documentElement.getAttribute('data-theme') || 'standard'
   const isNook = theme === 'nook'
   const variant = cat?.avatarVariant || 'tuxedo'
   const eye = cat?.eyeColor || '#4db86a'

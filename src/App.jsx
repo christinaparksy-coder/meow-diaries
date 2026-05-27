@@ -141,7 +141,10 @@ const tabs = [
 export default function App({ onThemeChange }) {
   const navigate = useNavigate()
   const location = useLocation()
-  const [theme, setTheme] = useState(() => localStorage.getItem('meowdiaries_theme') || 'pixel')
+  const [theme, setTheme] = useState(() => {
+    const stored = localStorage.getItem('meowdiaries_theme') || ''
+    return stored === 'nook' ? 'nook' : 'standard'
+  })
   const [notifOpen, setNotifOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [notifEnabled, setNotifEnabled] = useState(() => (localStorage.getItem('meowdiaries_notifications_enabled') ?? 'true') === 'true')
@@ -163,7 +166,7 @@ export default function App({ onThemeChange }) {
   }, [location.pathname])
 
   function setAndApplyTheme(next) {
-    const t = next === 'nook' ? 'nook' : 'pixel'
+    const t = next === 'nook' ? 'nook' : 'standard'
     setTheme(t)
     onThemeChange?.(t)
   }
@@ -312,13 +315,13 @@ export default function App({ onThemeChange }) {
                 <div className="mt-2 grid grid-cols-2 gap-2">
                   <button
                     type="button"
-                    onClick={() => setAndApplyTheme('pixel')}
+                    onClick={() => setAndApplyTheme('standard')}
                     className={[
                       'pixel-btn px-3 py-3 text-[10px] font-main',
-                      theme === 'pixel' ? 'border-accent bg-card' : 'border-border bg-surface text-muted'
+                      theme === 'standard' ? 'border-accent bg-card' : 'border-border bg-surface text-muted'
                     ].join(' ')}
                   >
-                    PIXEL {theme === 'pixel' ? '✓' : ''}
+                    STANDARD {theme === 'standard' ? '✓' : ''}
                   </button>
                   <button
                     type="button"

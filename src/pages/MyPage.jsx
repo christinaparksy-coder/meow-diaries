@@ -213,13 +213,13 @@ export default function MyPage({ theme, onThemeChange }) {
         <div className="grid grid-cols-2 gap-2">
           <button
             type="button"
-            onClick={() => onThemeChange?.('pixel')}
+            onClick={() => onThemeChange?.('standard')}
             className={[
               'pixel-btn px-3 py-3 text-[10px] font-main',
-              theme === 'pixel' ? 'border-accent bg-card' : 'border-border bg-surface text-muted'
+              theme === 'standard' ? 'border-accent bg-card' : 'border-border bg-surface text-muted'
             ].join(' ')}
           >
-            PIXEL
+            STANDARD
           </button>
           <button
             type="button"
